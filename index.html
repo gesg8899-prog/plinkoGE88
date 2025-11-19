@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Galactic Plinko</title>
 <style>
-/* (styling unchanged) */
 body{margin:0;background:#010114;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;color:#fff;position:relative;}
 .wrap{width:360px;padding:12px;position:relative;}
 canvas{width:100%;height:auto;border-radius:14px;display:block;box-shadow:0 12px 30px rgba(0,0,0,.6);}
@@ -69,10 +68,29 @@ header{text-align:center;color:#ff77ff;margin-bottom:8px;font-size:20px;text-sha
 
 <script>
 /* ========== CONFIG ========== */
-const PLAYER_GATE_URL = 'https://is.gd/freegameplinko'; // <- ganti kalau perlu
-/* ============================ */
+const PLAYER_GATE_URL = 'https://gesg8899-prog.github.io/unique-code-gate/player_gate.html';
 
-/* Canvas & elements */
+/* ========== CODE VALIDATION ========== */
+const urlParams = new URLSearchParams(window.location.search);
+const code = (urlParams.get('code') || localStorage.getItem('playerCode') || '').trim().toUpperCase();
+
+if(!code){
+    alert('No access code provided. Redirecting to gate.');
+    window.location.href = PLAYER_GATE_URL;
+} else {
+    // Simpan kode di localStorage
+    localStorage.setItem('playerCode', code);
+
+    // Cek jika sudah dimainkan
+    if(localStorage.getItem('played_' + code) === 'true'){
+        alert('Kode ini sudah digunakan di browser ini. Redirecting to gate.');
+        window.location.href = PLAYER_GATE_URL;
+    } else {
+        localStorage.setItem('played_' + code, 'true');
+    }
+}
+
+/* ========== GAME SCRIPT (original unchanged) ========== */
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 const W=canvas.width,H=canvas.height;
 const pointsFill=document.getElementById('pointsFill'),pointsText=document.getElementById('pointsText');
@@ -80,13 +98,11 @@ const resultsEl=document.getElementById('results'),pointsGrid=document.getElemen
 const winPopup=document.getElementById('winPopup'),losePopup=document.getElementById('losePopup');
 const winTitle=document.getElementById('winTitle'),winText=document.getElementById('winText');
 
-/* Game state */
 let coins=[],planets=[],astronauts=[];
 let ballsLeft=50,points=0;
 const ROWS=6,COLS=6,GRAVITY=0.28,BOUNCE=0.88,COIN_RADIUS=6,PLANET_RADIUS=18;
 const slotPoints=[0.5,0.5,0.5,0.5,0.5,0.5,1,1,1,2,2,3];
 
-/* Images */
 const planetPNGUrls=[
 'https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png',
 'https://static.gwvkyk.com/media/7b885200ea196d8678586.png',
@@ -95,26 +111,7 @@ const planetPNGUrls=[
 const planetImages=planetPNGUrls.map(url=>{const img=new Image();img.src=url;return img;});
 const astronautImg=new Image(); astronautImg.src='https://static.gwvkyk.com/media/ef7e4c21da196c3db7efa.png';
 
-/* ========== CODE/1x-play LOGIC ========== */
-const urlParams = new URLSearchParams(window.location.search);
-const code = (urlParams.get('code') || '').trim().toUpperCase();
-
-if(!code){
-    // no code → redirect to gate
-    alert('No access code provided. Redirecting to gate.');
-    window.location.href = PLAYER_GATE_URL;
-} else {
-    // if already played in this browser with same code → redirect
-    if(localStorage.getItem('played_' + code) === 'true'){
-        alert('Kode ini sudah digunakan di browser ini. Redirecting to gate.');
-        window.location.href = PLAYER_GATE_URL;
-    } else {
-        // mark as used for this browser immediately so refresh won't allow replay
-        localStorage.setItem('played_' + code, 'true');
-    }
-}
-
-/* ========== Helper functions & game logic (unchanged) ========== */
+/* ========== HELPER & GAME LOOP ========== */
 function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
 function generateAstronauts(){astronauts=[];for(let i=0;i<20;i++){astronauts.push({x:50+Math.random()*(W-100),y:200+Math.random()*200,floatPhase:Math.random()*Math.PI*2,scale:0.02+Math.random()*0.02});}}
 function generatePlanets(){planets=[];const leftPadding=30;const gapX=(W-leftPadding*2)/(COLS-1);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){const x=leftPadding + c*gapX + (r%2? gapX/2:0);const y=120 + r*70;const img=planetImages[Math.floor(Math.random()*planetImages.length)];planets.push({x,y,r:PLANET_RADIUS,img,lightPhase:Math.random()*Math.PI*2});}}}
@@ -171,30 +168,21 @@ function drawAstronauts(){astronauts.forEach(a=>{if(astronautImg.complete){ctx.s
 function draw(){drawBackground();drawAstronauts();drawPlanets();drawCoins();}
 function updateResultsText(){resultsEl.innerHTML=`<span style="color:#ff00ff;text-shadow:0 0 6px #ff00ff,0 0 12px #ff00ff;">Total Points: ${points.toFixed(1)}</span> | <span style="color:#00ffff;text-shadow:0 0 6px #00ffff,0 0 12px #00ffff;">Balls Left: ${ballsLeft}</span>`; const perc=Math.min(points/50,1); let color;if(perc<0.25)color='red';else if(perc<0.5)color='yellow';else if(perc<0.75)color='lime';else color='purple';pointsFill.style.background=color;pointsFill.style.width=(perc*100)+'%';pointsFill.style.boxShadow=`0 0 8px ${color},0 0 12px ${color},0 0 20px ${color} inset`;pointsText.textContent=Math.round(perc*100)+'%';}
 
-/* ========== Game end handling ========== */
 let loseRedirectTimer = null;
 function handleGameEnd(didWin){
     if(didWin){
         winPopup.classList.add('active');
-        // win: player already marked as played on entry — do nothing else
     } else {
         losePopup.classList.add('active');
-        // start 3s timer to redirect to gate
         if(loseRedirectTimer) clearTimeout(loseRedirectTimer);
-        loseRedirectTimer = setTimeout(()=> {
-            window.location.href = PLAYER_GATE_URL;
-        }, 3000);
-
-        // make Close button redirect immediately
-        const closeBtn = document.getElementById('loseCloseBtn');
-        closeBtn.onclick = () => {
+        loseRedirectTimer = setTimeout(()=> { window.location.href = PLAYER_GATE_URL; }, 3000);
+        document.getElementById('loseCloseBtn').onclick = () => {
             if(loseRedirectTimer) clearTimeout(loseRedirectTimer);
             window.location.href = PLAYER_GATE_URL;
         };
     }
 }
 
-/* ========== Init & loop ========== */
 function loop(){update();draw();requestAnimationFrame(loop);}
 initGame();
 loop();
