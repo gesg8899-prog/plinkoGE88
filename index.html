@@ -84,7 +84,7 @@ let gameOver=false; // tanda game sudah selesai
 // ===== LOCAL STORAGE: cek apakah sudah main =====
 if(localStorage.getItem('plinkoPlayed') === 'true'){
     gameOver = true;
-    alert("Permainan sudah dimainkan, tidak bisa ulang.");
+    alert("Oops! You’ve already played this game.");
 }
 
 const ROWS=6,COLS=6,GRAVITY=0.28,BOUNCE=0.88,COIN_RADIUS=6,PLANET_RADIUS=18;
@@ -172,3 +172,4 @@ musicToggle.addEventListener('click',()=>{
 </script>
 </body>
 </html>
+
