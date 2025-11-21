@@ -159,4 +159,7 @@ loop();
 
 const bgMusic=document.getElementById('bgMusic');
 const musicToggle=document.getElementById('musicToggle');
-musicToggle.addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play()
+musicToggle.addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play();musicToggle.textContent='Mute';}else{bgMusic.pause();musicToggle.textContent='Unmute';}});
+</script>
+</body>
+</html>
