@@ -1,442 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Galactic Plinko — Optimized Mobile</title>
+<title>Galactic Plinko</title>
 <style>
-  :root{--bg:#010114;--accent:#0ff;--mag:#ff77ff}
-  html,body{height:100%;margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#fff}
-  .wrap{width:360px;max-width:calc(100vw - 16px);padding:12px;margin:0 auto;box-sizing:border-box;position:relative;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  header{text-align:center;color:var(--mag);margin-bottom:8px;font-size:20px;text-shadow:0 0 10px var(--mag)}
-  canvas{width:100%;height:auto;border-radius:14px;display:block;box-shadow:0 12px 30px rgba(0,0,0,.6);touch-action:none}
-  #hud{width:100%;margin-top:10px}
-  #pointsGrid{display:flex;justify-content:space-around;margin:8px 0}
-  .pointBox{width:48px;height:48px;background:rgba(255,255,255,0.03);border:2px solid var(--accent);border-radius:8px;display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:16px;color:var(--accent)}
-  #pointsBar{margin:6px 0;background:rgba(0,0,0,0.3);border-radius:8px;height:24px;width:100%;display:flex;overflow:hidden;position:relative}
-  #pointsFill{height:100%;width:0%;transition:width .3s;border-radius:6px;box-shadow:inset 0 0 10px #fff}
-  #pointsText{position:absolute;left:50%;top:0;transform:translateX(-50%);color:#fff;font-weight:700}
-  #results{margin-top:8px;padding:8px;border-radius:8px;text-align:center;font-size:14px;color:var(--accent);background:rgba(0,0,0,0.25)}
-  #targets{font-size:13px;color:#ff9;margin-top:6px}
-  #musicToggle{position:fixed;top:12px;right:12px;padding:8px 12px;background:#ff0;color:#022;border:none;border-radius:8px;font-weight:bold;cursor:pointer;z-index:50}
-  /* popups */
-  .popup{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:60}
-  .popup.active{display:flex}
-  .popupContent{background:linear-gradient(180deg,#0ff,#44f);padding:18px 22px;border-radius:12px;text-align:center;max-width:320px;box-shadow:0 8px 20px rgba(0,0,0,.7)}
-  .popupContent h2{color:#ff0;margin-bottom:10px}
-  .popupContent p{color:#fff;margin-bottom:12px}
-  .popupContent button{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(90deg,#ff9f1c,#ffbf69);font-weight:700;cursor:pointer}
-  @media (min-width:700px){
-    .wrap{width:420px}
-  }
+body{margin:0;background:#010114;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;color:#fff;position:relative;}
+.wrap{width:360px;padding:12px;position:relative;}
+canvas{width:100%;height:auto;border-radius:14px;display:block;box-shadow:0 12px 30px rgba(0,0,0,.6);}
+header{text-align:center;color:#ff77ff;margin-bottom:8px;font-size:20px;text-shadow:0 0 10px #ff77ff,0 0 20px #ff44ff;}
+#pointsGrid{display:flex;justify-content:space-around;margin:12px 0 4px 0;}
+.pointBox{width:48px;height:48px;background:rgba(255,255,255,0.05);border:2px solid #0ff;border-radius:8px;display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:16px;color:#0ff;}
+#pointsBar{margin:6px 0;background:rgba(0,0,0,0.3);border-radius:8px;height:24px;width:100%;display:flex;overflow:hidden;position:relative;}
+#pointsFill{height:100%;width:0%;transition:width 0.4s ease;border-radius:6px;box-shadow:0 0 10px #fff inset;}
+#pointsText{position:absolute;left:50%;top:0;transform:translateX(-50%);color:#fff;font-weight:700;text-shadow:0 0 6px #fff;}
+#results{margin-top:8px;padding:8px;border-radius:8px;text-align:center;font-size:16px;color:#0ff;text-shadow:0 0 10px #0ff,0 0 20px #0ff;background:rgba(0,0,0,0.2);}
+#targets{margin-top:4px;padding:4px;border-radius:8px;text-align:center;font-size:14px;color:#ff9;text-shadow:0 0 6px #ff9,0 0 12px #ff9;}
+.floatingPoint{position:absolute;font-weight:bold;font-size:20px;color:#ff0;text-shadow:0 0 8px #ff0,0 0 16px #fff;pointer-events:none;animation:floatUp 1s ease-out forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-50px);}}
+#winPopup,#losePopup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:10;display:none;flex-direction:column;}
+#winPopup.active,#losePopup.active{display:flex;}
+.popupContent{background:linear-gradient(180deg,#0ff,#44f);padding:20px 28px;border-radius:14px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,0.7);}
+.popupContent h2{color:#ff0;margin-bottom:12px;text-shadow:0 0 10px #ff0,0 0 20px #fff;}
+.popupContent p{color:#fff;margin-bottom:12px;}
+.popupContent button{margin-top:12px;background:linear-gradient(90deg,#ff9f1c,#ffbf69);color:#022;cursor:pointer;padding:8px 16px;border-radius:8px;border:none;font-weight:700;}
+.popupContent img{width:120px;margin-bottom:12px;}
+.hint{font-size:14px;color:#ff77ff;text-shadow:0 0 6px #ff77ff;}
+#musicToggle{position:absolute;top:12px;right:12px;padding:8px 12px;background:#ff0;color:#022;border:none;border-radius:8px;font-weight:bold;cursor:pointer;z-index:20;}
 </style>
 </head>
 <body>
-<div class="wrap" id="wrap">
-  <header><h2>Galactic Plinko</h2><div class="hint">Tap top area to drop a Ball. Max 50 Balls.</div></header>
+<div class="wrap">
+<header>
+<h2>Galactic Plinko</h2>
+<div class="hint">Click top area to drop a Ball. Maximum 50 Balls.</div>
+</header>
 
-  <canvas id="c" width="360" height="640" aria-label="Plinko game"></canvas>
+<canvas id="c" width="360" height="640"></canvas>
 
-  <div id="hud">
-    <div id="pointsGrid" aria-hidden="true"></div>
-    <div id="pointsBar"><div id="pointsFill"></div><div id="pointsText">0%</div></div>
-    <div id="results">Total Points: 0 | Balls Left: 50</div>
-    <div id="targets">Target $3: 58 points | Target $6: 63 points</div>
-  </div>
+<div id="pointsGrid"></div>
+<div id="pointsBar"><div id="pointsFill"></div><div id="pointsText">0%</div></div>
+<div id="results">Total Points: 0 | Balls Left: 50</div>
+<div id="targets">Target $3: 58 points | Target $6: 63 points</div>
 </div>
 
 <button id="musicToggle">Mute</button>
 <audio id="bgMusic" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" autoplay loop></audio>
 
-<!-- win popup -->
-<div id="winPopup" class="popup"><div class="popupContent"><h2 id="winTitle">🎉 CONGRATS!</h2><p id="winText">Take screenshot and claim reward</p><a id="claimBtn" href="https://t.me/GE88SG_Wallet" target="_blank"><button>Claim</button></a></div></div>
+<div id="winPopup">
+<div class="popupContent">
+<h2 id="winTitle">🎉 CONGRATULATIONS! 🎉</h2>
+<p id="winText">Take a screenshot and claim your reward!</p>
+<a href="https://t.me/GE88SG_Wallet" target="_blank"><button>Claim Reward</button></a>
+</div>
+</div>
 
-<!-- lose popup -->
-<div id="losePopup" class="popup"><div class="popupContent"><img src="https://static.gwvkyk.com/media/41a1d1cdee196459257b7.gif" alt="try" style="width:100px;margin-bottom:8px"/><h2>TRY AGAIN!</h2><p>You didn’t reach minimum points.</p><button id="loseCloseBtn">Close</button></div></div>
+<div id="losePopup">
+<div class="popupContent">
+<img src="https://static.gwvkyk.com/media/41a1d1cdee196459257b7.gif" alt="Try Again"/>
+<h2>TRY AGAIN!</h2>
+<p>You didn’t reach minimum points. Better luck next time!</p>
+<button id="loseCloseBtn">Close</button>
+</div>
+</div>
 
 <script>
-/* ========== PERFORMANCE-TUNED PLINKO ========== */
-/* design goals:
-   - cap internal canvas pixel ratio to avoid huge renders on high-DPR phones
-   - cap FPS on mobile
-   - reduce expensive draw ops (shadows) on mobile
-   - draw floating points inside canvas (no DOM nodes)
-   - draw static background once to offscreen buffer
-*/
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height;
+const pointsFill=document.getElementById('pointsFill'),pointsText=document.getElementById('pointsText');
+const resultsEl=document.getElementById('results'),pointsGrid=document.getElementById('pointsGrid');
+const winPopup=document.getElementById('winPopup'),losePopup=document.getElementById('losePopup');
+const winTitle=document.getElementById('winTitle'),winText=document.getElementById('winText');
 
-/* CONFIG */
-const PLAYER_GATE_URL = 'https://gesg8899-prog.github.io/unique-code-gate/player_gate.html';
-const MAX_DPR = 1.6;         // cap DPR to limit rendering cost on phones
-const MOBILE_FPS = 30;       // fps cap on mobile
-const DESKTOP_FPS = 60;
-const MOBILE_WIDTH_BREAK = 700; // treat width < this as mobile
+let coins=[],planets=[],astronauts=[];
+let ballsLeft=50,points=0;
+let gameOver=false;
 
-/* FAST DETECT MOBILE */
-const isMobile = (() => {
-  // use width + userAgent heuristic
-  const w = Math.min(window.innerWidth, screen.width);
-  return w < MOBILE_WIDTH_BREAK || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-})();
-
-/* CAP fps */
-const FPS_CAP = isMobile ? MOBILE_FPS : DESKTOP_FPS;
-const FRAME_INTERVAL = 1000 / FPS_CAP;
-
-/* canvas setup with DPR cap */
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d', { alpha:false, desynchronized: true });
-function setupCanvasSize(){
-  const cssWidth = canvas.clientWidth;
-  const cssHeight = Math.round(cssWidth * (640/360)); // keep aspect ratio close to design
-  canvas.style.height = cssHeight + 'px';
-  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-  canvas.width = Math.round(cssWidth * dpr);
-  canvas.height = Math.round(cssHeight * dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0); // scale drawing to CSS pixels
+// ===== LOCAL STORAGE: cek sudah main =====
+if(localStorage.getItem('plinkoPlayed') === 'true'){
+    gameOver = true;
+    alert("Oops! You’ve already played this game.");
 }
-setupCanvasSize();
-window.addEventListener('resize', () => {
-  // debounce resize
-  clearTimeout(window.__plinko_resize);
-  window.__plinko_resize = setTimeout(()=>{ setupCanvasSize(); renderStaticBackground(); }, 120);
-});
 
-/* pre-render static background to offscreen canvas to avoid re-drawing heavy star field each frame */
-let bgBuffer = null;
-function renderStaticBackground(){
-  const w = canvas.width;
-  const h = canvas.height;
-  const dpr = (window.devicePixelRatio || 1) > MAX_DPR ? MAX_DPR : (window.devicePixelRatio || 1);
-  bgBuffer = document.createElement('canvas');
-  bgBuffer.width = w;
-  bgBuffer.height = h;
-  const bctx = bgBuffer.getContext('2d');
-  // fill bg
-  bctx.fillStyle = '#010114';
-  bctx.fillRect(0,0,w,h);
-  // draw fewer stars on mobile
-  const starCount = isMobile ? 30 : 80;
-  for(let i=0;i<starCount;i++){
-    const x = Math.random()*w, y = Math.random()*h;
-    const r = Math.random()*1.2 * (isMobile ? 0.9 : 1.6);
-    bctx.fillStyle = `rgba(255,255,255,${0.05 + Math.random()*0.3})`;
-    bctx.beginPath();
-    bctx.arc(x,y,r,0,Math.PI*2);
-    bctx.fill();
-  }
-}
-renderStaticBackground();
-
-/* Game state */
-let W = canvas.clientWidth, H = parseInt(canvas.style.height, 10);
-function syncWH(){ W = canvas.clientWidth; H = parseInt(canvas.style.height, 10); }
-syncWH();
-
-const pointsFill = document.getElementById('pointsFill');
-const pointsText = document.getElementById('pointsText');
-const resultsEl = document.getElementById('results');
-const pointsGridEl = document.getElementById('pointsGrid');
-const winPopup = document.getElementById('winPopup');
-const losePopup = document.getElementById('losePopup');
-const winTitle = document.getElementById('winTitle');
-const winText = document.getElementById('winText');
-
-let coins = [], planets = [], astronauts = [], floatingPts = [];
-let ballsLeft = 50, points = 0, gameOver = false;
-
-/* tuned parameters for performance */
-const ROWS = 6, COLS = 6;
-const GRAVITY = 0.28, BOUNCE = 0.88;
-const COIN_RADIUS = 6, PLANET_RADIUS = 18;
-const slotPoints = [0.5,0.5,0.5,0.5,0.5,0.5,1,1,1,2,2,3];
-
-/* adjust visual complexity for mobile */
-const ASTRONAUT_COUNT = isMobile ? 6 : 18;
-const TRAIL_MAX = isMobile ? 6 : 10;
-const STAR_OPACITY = isMobile ? 0.22 : 0.35;
-const SHADOW_ON = !isMobile; // avoid expensive shadow on mobile
-
-/* load images once */
-const planetPNGUrls = [
-  'https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png',
-  'https://static.gwvkyk.com/media/7b885200ea196d8678586.png',
-  'https://static.gwvkyk.com/media/c7933a00ea1965020c2e2.png'
+const ROWS=6,COLS=6,GRAVITY=0.28,BOUNCE=0.88,COIN_RADIUS=6,PLANET_RADIUS=18;
+const planetPNGUrls=[
+'https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png',
+'https://static.gwvkyk.com/media/7b885200ea196d8678586.png',
+'https://static.gwvkyk.com/media/c7933a00ea1965020c2e2.png'
 ];
-const planetImages = planetPNGUrls.map(url => { const img = new Image(); img.src = url; return img; });
-const astronautImg = new Image(); astronautImg.src = 'https://static.gwvkyk.com/media/ef7e4c21da196c3db7efa.png';
+const planetImages=planetPNGUrls.map(url=>{const img=new Image();img.src=url;return img;});
+const astronautImg=new Image(); astronautImg.src='https://static.gwvkyk.com/media/ef7e4c21da196c3db7efa.png';
+const slotPoints=[0.5,0.5,0.5,0.5,0.5,0.5,1,1,1,2,2,3];
 
-/* setup points grid display */
-function setupPointsGrid(){
-  pointsGridEl.innerHTML = '';
-  // shuffle a copy
-  const shuffled = slotPoints.slice().sort(()=>Math.random()-0.5);
-  shuffled.forEach(p => {
-    const box = document.createElement('div');
-    box.className = 'pointBox';
-    box.textContent = p;
-    pointsGridEl.appendChild(box);
-  });
-}
-setupPointsGrid();
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
 
-/* helper shuffle */
-function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+function generateAstronauts(){astronauts=[];for(let i=0;i<20;i++){astronauts.push({x:50+Math.random()*(W-100),y:200+Math.random()*200,floatPhase:Math.random()*Math.PI*2,scale:0.02+Math.random()*0.02});}}
+function generatePlanets(){planets=[];const leftPadding=30;const gapX=(W-leftPadding*2)/(COLS-1);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){const x=leftPadding + c*gapX + (r%2? gapX/2:0);const y=120 + r*70;const img=planetImages[Math.floor(Math.random()*planetImages.length)];planets.push({x,y,r:PLANET_RADIUS,img,lightPhase:Math.random()*Math.PI*2});}}}
 
-/* generate planets and astronauts with fewer objects on mobile */
-function generateAstronauts(){
-  astronauts = [];
-  for(let i=0;i<ASTRONAUT_COUNT;i++){
-    astronauts.push({
-      x: 50 + Math.random()*(W-100),
-      y: 200 + Math.random()*200,
-      floatPhase: Math.random()*Math.PI*2,
-      scale: 0.02 + Math.random()*0.02
-    });
-  }
-}
+function initGame(){coins=[]; points=0; ballsLeft=50; generateAstronauts(); generatePlanets(); setupPointsGrid(); updateResultsText();}
 
-function generatePlanets(){
-  planets = [];
-  const leftPadding = 30;
-  const gapX = (W - leftPadding*2) / (COLS - 1);
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      const x = leftPadding + c*gapX + (r%2 ? gapX/2 : 0);
-      const y = 120 + r*70;
-      const img = planetImages[Math.floor(Math.random()*planetImages.length)];
-      planets.push({ x, y, r: PLANET_RADIUS, img, lightPhase: Math.random()*Math.PI*2 });
-    }
-  }
-}
+function setupPointsGrid(){pointsGrid.innerHTML='';let shuffledPoints=shuffle([...slotPoints]);shuffledPoints.forEach(p=>{const box=document.createElement('div');box.className='pointBox';box.textContent=p;pointsGrid.appendChild(box);});}
 
-/* init/reset game */
-function initGame(){
-  syncWH();
-  coins = []; points = 0; ballsLeft = 50; gameOver = false;
-  generateAstronauts(); generatePlanets(); setupPointsGrid(); updateResultsText();
-  floatingPts = []; // clear canvas floating points
-}
-
-/* pointer handling */
-canvas.addEventListener('pointerdown', ev => {
-  if (ballsLeft <= 0 || gameOver) return;
-  const rect = canvas.getBoundingClientRect();
-  const px = (ev.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
-  coins.push({ x: Math.max(COIN_RADIUS, Math.min(W-COIN_RADIUS, px)), y: 36, vx: (Math.random()-0.5)*0.6, vy: 0, r: COIN_RADIUS, trail: [], collected:false, finished:false });
+canvas.addEventListener('pointerdown',ev=>{
+  if(ballsLeft<=0 || gameOver) return;
+  const rect=canvas.getBoundingClientRect();
+  const px=(ev.clientX-rect.left)*(canvas.width/rect.width);
+  coins.push({x:Math.max(COIN_RADIUS,Math.min(W-COIN_RADIUS,px)),y:36,vx:(Math.random()-0.5)*0.6,vy:0,r:COIN_RADIUS,trail:[],collected:false,finished:false});
   ballsLeft--; updateResultsText();
 });
 
-/* optimized floating point creation (canvas-based) */
-function createFloatingPoint(x, y, value){
-  floatingPts.push({ x, y, value, startedAt: performance.now(), lifetime: 900 });
-  // keep array short
-  if (floatingPts.length > 20) floatingPts.shift();
-}
+function reflect(vx,vy,nx,ny,damp=BOUNCE){const dot=vx*nx+vy*ny;return {vx:(vx-2*dot*nx)*damp,vy:(vy-2*dot*ny)*damp};}
+function createFloatingPoint(x,y,value){const span=document.createElement('div');span.className='floatingPoint';span.textContent='+'+value;span.style.left=x+'px';span.style.top=y+'px';document.querySelector('.wrap').appendChild(span);setTimeout(()=>span.remove(),1000);}
 
-/* physics reflect */
-function reflect(vx,vy,nx,ny,damp=BOUNCE){ const dot = vx*nx + vy*ny; return { vx:(vx-2*dot*nx)*damp, vy:(vy-2*dot*ny)*damp }; }
-
-/* update & draw — with fps cap */
-let lastFrame = 0;
-let rafId = null;
-let hidden = false;
-document.addEventListener('visibilitychange', ()=>{ hidden = document.hidden; if(!hidden && !rafId) loop(); });
-
-function update(dt){
-  // animate astronauts (lightweight)
-  const tNow = Date.now();
-  for(let a of astronauts){ a.x += Math.sin(tNow/1500 + a.floatPhase) * 0.2; a.y += Math.sin(tNow/2000 + a.floatPhase) * 0.1; }
-
-  // coins physics
+function update(){
+  astronauts.forEach(a=>{a.x+=Math.sin(Date.now()/1500+a.floatPhase)*0.2;a.y+=Math.sin(Date.now()/2000+a.floatPhase)*0.1;});
   for(let i=coins.length-1;i>=0;i--){
-    const c = coins[i];
-    c.vy += GRAVITY;
-    c.x += c.vx;
-    c.y += c.vy;
-    // trail record (short)
-    c.trail.push({x:c.x,y:c.y});
-    if(c.trail.length > TRAIL_MAX) c.trail.shift();
+    const c=coins[i]; c.vy+=GRAVITY;c.x+=c.vx;c.y+=c.vy;c.trail.push({x:c.x,y:c.y}); if(c.trail.length>10)c.trail.shift();
+    if(c.x-c.r<0){c.x=c.r;c.vx*=-1;}
+    if(c.x+c.r>W){c.x=W-c.r;c.vx*=-1;}
+    planets.forEach(p=>{const dx=c.x-p.x,dy=c.y-p.y,dist=Math.hypot(dx,dy),minD=c.r+p.r;if(dist<minD && dist>0.0001){const nx=dx/dist,ny=dy/dist,overlap=minD-dist;c.x+=nx*(overlap+0.2);c.y+=ny*(overlap+0.2);const nv=reflect(c.vx,c.vy,nx,ny);c.vx=nv.vx+(Math.random()-0.5)*0.05;c.vy=nv.vy-0.1;}});
 
-    // wall bounce
-    if(c.x - c.r < 0){ c.x = c.r; c.vx *= -1; }
-    if(c.x + c.r > W){ c.x = W - c.r; c.vx *= -1; }
-
-    // collide planets
-    for(let p of planets){
-      const dx = c.x - p.x, dy = c.y - p.y;
-      const dist = Math.hypot(dx,dy);
-      const minD = c.r + p.r;
-      if(dist < minD && dist > 0.0001){
-        const nx = dx/dist, ny = dy/dist;
-        const overlap = minD - dist;
-        c.x += nx * (overlap + 0.2);
-        c.y += ny * (overlap + 0.2);
-        const nv = reflect(c.vx, c.vy, nx, ny);
-        c.vx = nv.vx + (Math.random()-0.5)*0.05;
-        c.vy = nv.vy - 0.1;
-      }
+    if(c.y>H-40 && !c.collected){
+      const randIndex=Math.floor(Math.random()*slotPoints.length);
+      const pointVal=slotPoints[randIndex]; points+=pointVal;c.collected=true;createFloatingPoint(c.x-12,H-50,pointVal);updateResultsText();
     }
-
-    // slot detection
-    if(c.y > H - 40 && !c.collected){
-      const randIndex = Math.floor(Math.random()*slotPoints.length);
-      const pointVal = slotPoints[randIndex];
-      points += pointVal;
-      c.collected = true;
-      createFloatingPoint(c.x, H - 50, pointVal);
-      updateResultsText();
-    }
-
-    // out of bounds
-    if(c.y > H + 50){ c.finished = true; coins.splice(i,1); }
+    if(c.y>H+50){c.finished=true;coins.splice(i,1);}
   }
 
-  // end check
-  if(coins.length === 0 && ballsLeft === 0 && !gameOver){
+  if(coins.every(c=>c.finished) && ballsLeft===0 && !gameOver){
+    if(points >= 63){
+        winTitle.textContent="🎉 YOU WIN $18! 🎉";
+        winText.textContent="Take a screenshot and claim your $18 reward!";
+        winPopup.classList.add('active');
+    }
+    else if(points >= 58){
+        winTitle.textContent="🎉 YOU WIN $3! 🎉";
+        winText.textContent="Take a screenshot and claim your $3 reward!";
+        winPopup.classList.add('active');
+    }
+    else {
+        losePopup.classList.add('active');
+    }
     gameOver = true;
     localStorage.setItem('plinkoPlayed','true');
-    if(points >= 63){
-      winTitle.textContent = "🎉 YOU WIN $18! 🎉";
-      winText.textContent = "Take screenshot and claim your $18 reward!";
-      showWin();
-    } else if(points >= 58){
-      winTitle.textContent = "🎉 YOU WIN $3! 🎉";
-      winText.textContent = "Take screenshot and claim your $3 reward!";
-      showWin();
-    } else {
-      showLose();
-    }
   }
 }
 
-/* drawing */
-function draw(){
-  // draw static background buffer scaled to canvas
-  if(bgBuffer){
-    ctx.drawImage(bgBuffer, 0, 0, canvas.width, canvas.height);
-  } else {
-    ctx.fillStyle = '#010114'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  }
+function drawBackground(){ctx.fillStyle='#010114';ctx.fillRect(0,0,W,H);for(let s=0;s<60;s++){ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.3})`;ctx.fillRect(Math.random()*W,Math.random()*H,2,2);}}
+function drawPlanets(){planets.forEach(p=>{if(p.img.complete){const glow=Math.sin(Date.now()/300+p.lightPhase)*0.5+0.5;ctx.save();ctx.shadowColor='rgba(0,255,255,'+glow+')';ctx.shadowBlur=12;ctx.drawImage(p.img,p.x-PLANET_RADIUS,p.y-PLANET_RADIUS,PLANET_RADIUS*2,PLANET_RADIUS*2);ctx.restore();}});}
+function drawCoins(){coins.forEach(c=>{ctx.beginPath();ctx.arc(c.x,c.y,c.r,0,Math.PI*2);ctx.fillStyle='#0ff';ctx.fill();});}
+function drawAstronauts(){astronauts.forEach(a=>{if(astronautImg.complete){ctx.save();ctx.translate(a.x,a.y);ctx.drawImage(astronautImg,-astronautImg.width/2*a.scale,-astronautImg.height/2*a.scale,astronautImg.width*a.scale,astronautImg.height*a.scale);ctx.restore();}});}
+function draw(){drawBackground();drawAstronauts();drawPlanets();drawCoins();}
+function updateResultsText(){resultsEl.innerHTML=`<span style="color:#ff00ff;text-shadow:0 0 6px #ff00ff,0 0 12px #ff00ff;">Total Points: ${points.toFixed(1)}</span> | <span style="color:#00ffff;text-shadow:0 0 6px #00ffff,0 0 12px #00ffff;">Balls Left: ${ballsLeft}</span>`; const perc=Math.min(points/50,1); let color;if(perc<0.25)color='red';else if(perc<0.5)color='yellow';else if(perc<0.75)color='lime';else color='purple';pointsFill.style.background=color;pointsFill.style.width=(perc*100)+'%';pointsFill.style.boxShadow=`0 0 8px ${color},0 0 12px ${color},0 0 20px ${color} inset`;pointsText.textContent=Math.round(perc*100)+'%';}
 
-  ctx.save();
-  // occasional light shadow on desktop
-  if(SHADOW_ON){ ctx.shadowColor = 'rgba(0,255,255,0.6)'; ctx.shadowBlur = 8; } else { ctx.shadowBlur = 0; }
+function loop(){update();draw();requestAnimationFrame(loop);}
+initGame();
+loop();
 
-  // draw astronauts (lightweight)
-  for(let a of astronauts){
-    if(astronautImg.complete){
-      const s = a.scale * 120; // scaled draw size
-      ctx.drawImage(astronautImg, a.x - s/2, a.y - s/2, s, s);
-    }
-  }
-
-  // draw planets
-  for(let p of planets){
-    if(p.img.complete){ ctx.drawImage(p.img, p.x - p.r, p.y - p.r, p.r*2, p.r*2); }
-  }
-
-  // draw coin trails and coins
-  for(let c of coins){
-    // trail (faint)
-    for(let t=0;t<c.trail.length;t++){
-      const pt = c.trail[t];
-      const alpha = (t+1)/c.trail.length * 0.25;
-      ctx.fillStyle = `rgba(0,200,255,${alpha})`;
-      const r = c.r * (0.35 + t*0.02);
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, r, 0, Math.PI*2);
-      ctx.fill();
-    }
-    // coin
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
-    ctx.fillStyle = '#0ff';
-    ctx.fill();
-  }
-
-  // draw floating points (canvas-based)
-  const now = performance.now();
-  for(let i = floatingPts.length - 1; i >= 0; i--){
-    const fp = floatingPts[i];
-    const age = now - fp.startedAt;
-    const t = age / fp.lifetime;
-    if(t >= 1){ floatingPts.splice(i,1); continue; }
-    ctx.save();
-    ctx.globalAlpha = 1 - t;
-    ctx.fillStyle = '#ffff66';
-    ctx.font = `${14 + 6*(1-t)}px bold  Arial`;
-    ctx.fillText('+' + fp.value, fp.x - 8, fp.y - 30 - 30*t);
-    ctx.restore();
-  }
-
-  ctx.restore();
-}
-
-/* FPS-capped loop */
-function loop(ts){
-  if (hidden) { rafId = null; return; }
-  if(!lastFrame) lastFrame = ts;
-  const delta = ts - lastFrame;
-  if(delta >= FRAME_INTERVAL){
-    lastFrame = ts - (delta % FRAME_INTERVAL);
-    update(delta);
-    draw();
-  }
-  rafId = requestAnimationFrame(loop);
-}
-
-/* start/stop helpers */
-function startLoop(){ if(!rafId){ lastFrame = 0; rafId = requestAnimationFrame(loop); } }
-function stopLoop(){ if(rafId){ cancelAnimationFrame(rafId); rafId = null; } }
-
-/* UI updates */
-function updateResultsText(){
-  resultsEl.innerHTML = `<span style="color:#ff00ff;font-weight:700">Total Points: ${points.toFixed(1)}</span> | <span style="color:#00ffff;font-weight:700">Balls Left: ${ballsLeft}</span>`;
-  const perc = Math.min(points/50, 1);
-  pointsFill.style.width = (perc*100) + '%';
-  pointsText.textContent = Math.round(perc*100) + '%';
-}
-
-/* popups */
-function showWin(){ winPopup.classList.add('active'); stopLoop(); }
-function showLose(){
-  losePopup.classList.add('active');
-  // auto-redirect to gate after 3s
-  const timer = setTimeout(()=>{ window.location.href = PLAYER_GATE_URL; }, 3000);
-  document.getElementById('loseCloseBtn').onclick = () => { clearTimeout(timer); window.location.href = PLAYER_GATE_URL; };
-  stopLoop();
-}
-
-/* initial boot */
-(function boot(){
-  // fast check localStorage single play
-  if(localStorage.getItem('plinkoPlayed') === 'true'){
-    // show a friendly message and prevent playing
-    setTimeout(()=>{ alert('You have already played this game in this browser.'); window.location.href = PLAYER_GATE_URL; }, 250);
-    return;
-  }
-  // sizing & init
-  setupCanvasSize();
-  renderStaticBackground();
-  syncWH();
-  generateAstronauts();
-  generatePlanets();
-  initGame();
-  startLoop();
-})();
-
-/* music toggle */
-const bgMusic = document.getElementById('bgMusic');
-const musicToggle = document.getElementById('musicToggle');
-musicToggle.addEventListener('click', ()=>{
-  if(bgMusic.paused){ bgMusic.play(); musicToggle.textContent = 'Mute'; }
-  else { bgMusic.pause(); musicToggle.textContent = 'Unmute'; }
-});
-
-/* pause when page hidden */
-document.addEventListener('visibilitychange', () => {
-  if(document.hidden) stopLoop(); else startLoop();
-});
-</script>
-</body>
-</html>
+const bgMusic=document.getElementById('bgMusic');
+const musicToggle=document.getElementById('musicToggle');
+musicToggle.addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play()
