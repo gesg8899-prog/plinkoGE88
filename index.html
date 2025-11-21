@@ -7,7 +7,7 @@
 <style>
 body{margin:0;background:#010114;display:flex;justify-content:center;align-items:center;height:100vh;font-family:Arial;color:#fff;position:relative;overflow:hidden;}
 .wrap{width:360px;padding:12px;position:relative;}
-canvas{width:100%;height:auto;border-radius:14px;display:block;box-shadow:0 12px 30px rgba(0,0,0,.6);}
+canvas{width:100%;height:auto;border-radius:14px;display:block;}
 header{text-align:center;color:#ff77ff;margin-bottom:8px;font-size:20px;text-shadow:0 0 10px #ff77ff,0 0 20px #ff44ff;}
 #pointsGrid{display:flex;justify-content:space-around;margin:12px 0 4px 0;}
 .pointBox{width:48px;height:48px;background:rgba(255,255,255,0.05);border:2px solid #0ff;border-radius:8px;display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:16px;color:#0ff;}
@@ -16,13 +16,14 @@ header{text-align:center;color:#ff77ff;margin-bottom:8px;font-size:20px;text-sha
 #pointsText{position:absolute;left:50%;top:0;transform:translateX(-50%);color:#fff;font-weight:700;text-shadow:0 0 6px #fff;}
 #results{margin-top:8px;padding:8px;border-radius:8px;text-align:center;font-size:16px;color:#0ff;background:rgba(0,0,0,0.2);}
 #targets{margin-top:4px;padding:4px;border-radius:8px;text-align:center;font-size:14px;color:#ff9;}
-#winPopup,#losePopup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;z-index:10;flex-direction:column;}
+.floatingPoint{display:none;}
+#winPopup,#losePopup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:10;display:none;flex-direction:column;}
 #winPopup.active,#losePopup.active{display:flex;}
 .popupContent{background:linear-gradient(180deg,#0ff,#44f);padding:20px 28px;border-radius:14px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,0.7);}
-.popupContent h2{color:#ff0;margin-bottom:12px;}
+.popupContent h2{color:#ff0;margin-bottom:12px;text-shadow:0 0 10px #ff0,0 0 20px #fff;}
 .popupContent p{color:#fff;margin-bottom:12px;}
 .popupContent button{margin-top:12px;background:linear-gradient(90deg,#ff9f1c,#ffbf69);color:#022;cursor:pointer;padding:8px 16px;border-radius:8px;border:none;font-weight:700;}
-.hint{font-size:14px;color:#ff77ff;}
+.hint{font-size:14px;color:#ff77ff;text-shadow:0 0 6px #ff77ff;}
 #musicToggle{position:absolute;top:12px;right:12px;padding:8px 12px;background:#ff0;color:#022;border:none;border-radius:8px;font-weight:bold;cursor:pointer;z-index:20;}
 </style>
 </head>
@@ -54,7 +55,6 @@ header{text-align:center;color:#ff77ff;margin-bottom:8px;font-size:20px;text-sha
 
 <div id="losePopup">
 <div class="popupContent">
-<img src="https://static.gwvkyk.com/media/41a1d1cdee196459257b7.gif" alt="Try Again"/>
 <h2>TRY AGAIN!</h2>
 <p>You didn’t reach minimum points. Better luck next time!</p>
 <button id="loseCloseBtn">Close</button>
@@ -70,69 +70,74 @@ const winPopup=document.getElementById('winPopup'),losePopup=document.getElement
 const winTitle=document.getElementById('winTitle'),winText=document.getElementById('winText');
 
 let coins=[],planets=[],astronauts=[];
-let ballsLeft=50,points=0,gameOver=false;
+let ballsLeft=50,points=0;
+let gameOver=false;
 
 if(localStorage.getItem('plinkoPlayed')==='true'){gameOver=true; alert("Oops! You’ve already played this game.");}
 
-const ROWS=6,COLS=6,GRAVITY=0.28,COIN_RADIUS=6,PLANET_RADIUS=30;
-const planetPNGUrls=[
-'https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png',
-'https://static.gwvkyk.com/media/7b885200ea196d8678586.png',
-'https://static.gwvkyk.com/media/c7933a00ea1965020c2e2.png',
-'https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png'
-];
+const ROWS=6,COLS=6,GRAVITY=0.28,BOUNCE=0.88,COIN_RADIUS=6,PLANET_RADIUS=18;
+const planetPNGUrls=['https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png','https://static.gwvkyk.com/media/7b885200ea196d8678586.png','https://static.gwvkyk.com/media/c7933a00ea1965020c2e2.png'];
 const planetImages=planetPNGUrls.map(url=>{const img=new Image();img.src=url;return img;});
-const astronautImg=new Image();astronautImg.src='https://static.gwvkyk.com/media/ef7e4c21da196c3db7efa.png';
-const slotPoints=[0.5,0.5,0.5,0.5,0.5,1,1,2,2,3];
+const astronautImg=new Image(); astronautImg.src='https://static.gwvkyk.com/media/ef7e4c21da196c3db7efa.png';
+const slotPoints=[0.5,0.5,0.5,0.5,0.5,0.5,1,1,1,2,2,3];
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 function generateAstronauts(){astronauts=[];for(let i=0;i<5;i++){astronauts.push({x:50+Math.random()*(W-100),y:200+Math.random()*200,floatPhase:Math.random()*Math.PI*2,scale:0.02+Math.random()*0.02});}}
 
-function generatePlanets(){planets=[];for(let i=0;i<4;i++){planets.push({x:60+Math.random()*(W-120),y:150+Math.random()*200,img:planetImages[i],angle:Math.random()*Math.PI*2,spinSpeed:0.01+Math.random()*0.02});}}
+function generatePlanets(){planets=[];const leftPadding=30;const gapX=(W-leftPadding*2)/(COLS-1);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){const x=leftPadding+c*gapX+(r%2?gapX/2:0);const y=120+r*70;const img=planetImages[Math.floor(Math.random()*planetImages.length)];planets.push({x,y,r:PLANET_RADIUS,img,lightPhase:Math.random()*Math.PI*2});}}}
 
-function initGame(){coins=[];points=0;ballsLeft=50;gameOver=false;generateAstronauts();generatePlanets();setupPointsGrid();updateResultsText();}
+function initGame(){coins=[];points=0;ballsLeft=50;if(!gameOver){gameOver=false;}generateAstronauts();generatePlanets();setupPointsGrid();updateResultsText();}
 
-function setupPointsGrid(){pointsGrid.innerHTML='';shuffle([...slotPoints]).forEach(p=>{const box=document.createElement('div');box.className='pointBox';box.textContent=p;pointsGrid.appendChild(box);});}
+function setupPointsGrid(){pointsGrid.innerHTML='';let shuffledPoints=shuffle([...slotPoints]);shuffledPoints.forEach(p=>{const box=document.createElement('div');box.className='pointBox';box.textContent=p;pointsGrid.appendChild(box);});}
 
 canvas.addEventListener('pointerdown',ev=>{
-  if(ballsLeft<=0||gameOver)return;
-  const rect=canvas.getBoundingClientRect();
-  const px=(ev.clientX-rect.left)*(canvas.width/rect.width);
-  coins.push({x:px,y:36,vy:0,r:COIN_RADIUS,finished:false,collected:false});
-  ballsLeft--;updateResultsText();
+if(ballsLeft<=0||gameOver)return;
+const rect=canvas.getBoundingClientRect();
+const px=(ev.clientX-rect.left)*(canvas.width/rect.width);
+coins.push({x:Math.max(COIN_RADIUS,Math.min(W-COIN_RADIUS,px)),y:36,vx:(Math.random()-0.5)*0.6,vy:0,r:COIN_RADIUS,collected:false,finished:false});
+ballsLeft--;updateResultsText();
 });
 
-function createFloatingPoint(x,y,value){} // disable floating points for smoothness
+function reflect(vx,vy,nx,ny,damp=BOUNCE){const dot=vx*nx+vy*ny;return {vx:(vx-2*dot*nx)*damp,vy:(vy-2*dot*ny)*damp};}
 
 function update(){
-  astronauts.forEach(a=>{a.x+=Math.sin(Date.now()/1500+a.floatPhase)*0.2;a.y+=Math.sin(Date.now()/2000+a.floatPhase)*0.1;});
-  coins.forEach(c=>{c.vy+=GRAVITY;c.y+=c.vy;if(c.y>H-40&&!c.collected){points+=slotPoints[Math.floor(Math.random()*slotPoints.length)];c.collected=true;} if(c.y>H+50)c.finished=true;});
-  if(coins.every(c=>c.finished)&&ballsLeft===0&&!gameOver){
-    if(points>=63){winTitle.textContent="🎉 YOU WIN $18! 🎉";winText.textContent="Take a screenshot and claim your $18 reward!";winPopup.classList.add('active');}
-    else if(points>=58){winTitle.textContent="🎉 YOU WIN $3! 🎉";winText.textContent="Take a screenshot and claim your $3 reward!";winPopup.classList.add('active');}
-    else{losePopup.classList.add('active');}
-    gameOver=true;
-    localStorage.setItem('plinkoPlayed','true');
-  }
+astronauts.forEach(a=>{a.x+=Math.sin(Date.now()/1500+a.floatPhase)*0.2;a.y+=Math.sin(Date.now()/2000+a.floatPhase)*0.1;});
+for(let i=coins.length-1;i>=0;i--){
+const c=coins[i];c.vy+=GRAVITY;c.x+=c.vx;c.y+=c.vy;
+planets.forEach(p=>{const dx=c.x-p.x,dy=c.y-p.y,dist=Math.hypot(dx,dy),minD=c.r+p.r;if(dist<minD && dist>0.0001){const nx=dx/dist,ny=dy/dist,overlap=minD-dist;c.x+=nx*(overlap+0.2);c.y+=ny*(overlap+0.2);const nv=reflect(c.vx,c.vy,nx,ny);c.vx=nv.vx;c.vy=nv.vy-0.1;}});
+
+if(c.y>H-40 && !c.collected){const randIndex=Math.floor(Math.random()*slotPoints.length);const pointVal=slotPoints[randIndex];points+=pointVal;c.collected=true;updateResultsText();}
+if(c.y>H+50){c.finished=true;coins.splice(i,1);}
+}
+
+if(coins.every(c=>c.finished)&&ballsLeft===0&&!gameOver){
+if(points>=63){winTitle.textContent="🎉 YOU WIN $18! 🎉";winText.textContent="Take a screenshot and claim your $18 reward!";winPopup.classList.add('active');}
+else if(points>=58){winTitle.textContent="🎉 YOU WIN $3! 🎉";winText.textContent="Take a screenshot and claim your $3 reward!";winPopup.classList.add('active');}
+else{losePopup.classList.add('active');}
+gameOver=true;localStorage.setItem('plinkoPlayed','true');
+}
 }
 
 function drawBackground(){
-  ctx.fillStyle='#010114';ctx.fillRect(0,0,W,H);
-  // simple lightning effect
-  if(Math.random()<0.02){ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(Math.random()*W,0);ctx.lineTo(Math.random()*W,H);ctx.stroke();}
+ctx.fillStyle='#010114';ctx.fillRect(0,0,W,H);
+
+// Petir ringan
+if(Math.random()<0.02){ctx.fillStyle='rgba(255,255,255,0.8)';ctx.fillRect(Math.random()*W,Math.random()*H,2,20);}
 }
-function drawPlanets(){planets.forEach(p=>{if(p.img.complete){ctx.save();ctx.translate(p.x,p.y);p.angle+=p.spinSpeed;ctx.rotate(p.angle);ctx.drawImage(p.img,-PLANET_RADIUS,-PLANET_RADIUS,PLANET_RADIUS*2,PLANET_RADIUS*2);ctx.restore();}});}
+
+function drawPlanets(){planets.forEach(p=>{if(p.img.complete){ctx.drawImage(p.img,p.x-PLANET_RADIUS,p.y-PLANET_RADIUS,PLANET_RADIUS*2,PLANET_RADIUS*2);}});}
+function drawAstronauts(){astronauts.forEach(a=>{if(astronautImg.complete){ctx.drawImage(astronautImg,a.x-astronautImg.width/2*a.scale,a.y-astronautImg.height/2*a.scale,astronautImg.width*a.scale,astronautImg.height*a.scale);}});}
 function drawCoins(){coins.forEach(c=>{ctx.beginPath();ctx.arc(c.x,c.y,c.r,0,Math.PI*2);ctx.fillStyle='#0ff';ctx.fill();});}
-function drawAstronauts(){astronauts.forEach(a=>{if(astronautImg.complete){ctx.save();ctx.translate(a.x,a.y);ctx.drawImage(astronautImg,-astronautImg.width/2*a.scale,-astronautImg.height/2*a.scale,astronautImg.width*a.scale,astronautImg.height*a.scale);ctx.restore();}});}
-function draw(){drawBackground();drawPlanets();drawAstronauts();drawCoins();}
-function updateResultsText(){resultsEl.innerHTML=`Total Points: ${points.toFixed(1)} | Balls Left: ${ballsLeft}`; pointsFill.style.width=(Math.min(points/50,1)*100)+'%';}
+function draw(){drawBackground();drawAstronauts();drawPlanets();drawCoins();}
+function updateResultsText(){resultsEl.innerHTML=`Total Points: ${points.toFixed(1)} | Balls Left: ${ballsLeft}`; const perc=Math.min(points/50,1);pointsFill.style.width=(perc*100)+'%';}
 
 function loop(){update();draw();requestAnimationFrame(loop);}
 initGame();loop();
 
 const bgMusic=document.getElementById('bgMusic');
-document.getElementById('musicToggle').addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play();}else{bgMusic.pause();}});
+const musicToggle=document.getElementById('musicToggle');
+musicToggle.addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play();musicToggle.textContent='Mute';}else{bgMusic.pause();musicToggle.textContent='Unmute';}});
 
 document.getElementById('loseCloseBtn').addEventListener('click',()=>{window.location.href='https://ge88s.club/';});
 </script>
