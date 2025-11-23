@@ -5,189 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Galactic Plinko</title>
 <style>
-body{
-  margin:0;
-  background:#010114;
-  font-family:Arial;
-  color:#fff;
-  overflow:hidden;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  height:100vh;
-}
-.wrap{
-  width:95vw;
-  max-width:400px;
-  padding:8px;
-  display:none;
-  flex-direction:column;
-  align-items:center;
-}
-header{
-  width:100%;
-  text-align:center;
-  margin-bottom:4px;
-}
-#logo{
-  width:60%;
-  max-width:120px;
-  margin:0 auto 4px auto;
-  display:block;
-}
-h2{
-  margin:2px 0;
-  font-size:1.2em;
-  color:#ff77ff;
-  text-shadow:0 0 6px #ff77ff;
-}
-.hint{
-  font-size:0.9em;
-  color:#ff77ff;
-  margin-bottom:4px;
-}
-canvas{
-  width:100%;
-  border-radius:12px;
-  box-shadow:0 8px 20px rgba(0,0,0,.5);
-  display:block;
-}
-#pointsGrid{
-  display:flex;
-  justify-content:space-between;
-  margin:6px auto;
-  width:95%;
-}
-.pointBox{
-  width:15%;
-  min-width:40px;
-  height:40px;
-  background:rgba(255,255,255,0.05);
-  border:2px solid #0ff;
-  border-radius:6px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-weight:bold;
-  font-size:14px;
-  color:#0ff;
-}
-#pointsBar{
-  margin:4px auto;
-  background:rgba(0,0,0,0.2);
-  border-radius:6px;
-  height:20px;
-  width:95%;
-  display:flex;
-  overflow:hidden;
-  position:relative;
-}
-#pointsFill{
-  height:100%;
-  width:0%;
-  transition:width 0.4s ease;
-  border-radius:6px;
-  box-shadow:0 0 6px #fff inset;
-}
-#pointsText{
-  position:absolute;
-  left:50%;
-  top:0;
-  transform:translateX(-50%);
-  color:#fff;
-  font-weight:700;
-  font-size:12px;
-}
-#results{
-  margin:4px auto;
-  padding:4px;
-  border-radius:6px;
-  text-align:center;
-  font-size:12px;
-  color:#0ff;
-  background:rgba(0,0,0,0.2);
-  width:95%;
-}
-#targets{
-  margin:2px auto;
-  padding:2px;
-  border-radius:5px;
-  text-align:center;
-  font-size:11px;
-  color:#ff9;
-  width:95%;
-}
-.floatingPoint{
-  position:absolute;
-  font-weight:bold;
-  font-size:18px;
-  color:#ff0;
-  text-shadow:0 0 8px #ff0,0 0 16px #fff;
-  pointer-events:none;
-  animation:floatUp 1s ease-out forwards;
-}
+body{margin:0;background:#010114;font-family:Arial;color:#fff;overflow:hidden;display:flex;justify-content:center;align-items:flex-start;height:100vh;}
+.wrap{width:95vw;max-width:400px;padding:8px;display:none;flex-direction:column;align-items:center;}
+header{width:100%;text-align:center;margin-bottom:4px;}
+#logo{width:60%;max-width:120px;margin:0 auto 4px auto;display:block;}
+h2{margin:2px 0;font-size:1.2em;color:#ff77ff;text-shadow:0 0 6px #ff77ff;}
+.hint{font-size:0.9em;color:#ff77ff;margin-bottom:4px;}
+canvas{width:100%;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.5);display:block;}
+#pointsGrid{display:flex;justify-content:space-between;margin:6px auto;width:95%;}
+.pointBox{width:15%;min-width:40px;height:40px;background:rgba(255,255,255,0.05);border:2px solid #0ff;border-radius:6px;display:flex;justify-content:center;align-items:center;font-weight:bold;font-size:14px;color:#0ff;}
+#pointsBar{margin:4px auto;background:rgba(0,0,0,0.2);border-radius:6px;height:20px;width:95%;display:flex;overflow:hidden;position:relative;}
+#pointsFill{height:100%;width:0%;transition:width 0.2s ease;border-radius:6px;box-shadow:0 0 6px #fff inset;}
+#pointsText{position:absolute;left:50%;top:0;transform:translateX(-50%);color:#fff;font-weight:700;font-size:12px;}
+#results{margin:4px auto;padding:4px;border-radius:6px;text-align:center;font-size:12px;color:#0ff;background:rgba(0,0,0,0.2);width:95%;}
+#targets{margin:2px auto;padding:2px;border-radius:5px;text-align:center;font-size:11px;color:#ff9;width:95%;}
+.floatingPoint{position:absolute;font-weight:bold;font-size:18px;color:#ff0;text-shadow:0 0 8px #ff0,0 0 16px #fff;pointer-events:none;animation:floatUp 1s ease-out forwards;}
 @keyframes floatUp{0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-50px);}}
-#winPopup,#losePopup{
-  position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.85);
-  display:flex;justify-content:center;align-items:center;
-  z-index:10;display:none;flex-direction:column;
-}
+#winPopup,#losePopup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:10;display:none;flex-direction:column;}
 #winPopup.active,#losePopup.active{display:flex;}
-.popupContent{
-  background:linear-gradient(180deg,#0ff,#44f);
-  padding:20px 28px;
-  border-radius:14px;
-  text-align:center;
-  box-shadow:0 8px 20px rgba(0,0,0,0.7);
-}
+.popupContent{background:linear-gradient(180deg,#0ff,#44f);padding:20px 28px;border-radius:14px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,0.7);}
 .popupContent h2{color:#ff0;margin-bottom:12px;text-shadow:0 0 10px #ff0,0 0 20px #fff;}
 .popupContent p{color:#fff;margin-bottom:12px;}
-.popupContent button{
-  margin-top:12px;
-  background:linear-gradient(90deg,#ff9f1c,#ffbf69);
-  color:#022;
-  cursor:pointer;
-  padding:8px 16px;
-  border-radius:8px;
-  border:none;
-  font-weight:700;
-}
-#musicToggle{
-  position:absolute;
-  top:6px;right:6px;
-  padding:4px 6px;
-  background:#ff0;color:#022;
-  border:none;border-radius:4px;
-  font-weight:bold;cursor:pointer;
-  font-size:10px;z-index:20;
-}
-#loadingScreen{
-  position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:#010114;
-  display:flex;justify-content:center;align-items:center;
-  flex-direction:column;z-index:30;color:#0ff;font-size:18px;text-shadow:0 0 10px #0ff;
-}
-#loadingBar{
-  width:80%;height:14px;border:2px solid #0ff;border-radius:8px;margin-top:12px;overflow:hidden;
-}
+.popupContent button{margin-top:12px;background:linear-gradient(90deg,#ff9f1c,#ffbf69);color:#022;cursor:pointer;padding:8px 16px;border-radius:8px;border:none;font-weight:700;}
+#musicToggle{position:absolute;top:6px;right:6px;padding:4px 6px;background:#ff0;color:#022;border:none;border-radius:4px;font-weight:bold;cursor:pointer;font-size:10px;z-index:20;}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#010114;display:flex;justify-content:center;align-items:center;flex-direction:column;z-index:30;color:#0ff;font-size:18px;text-shadow:0 0 10px #0ff;}
+#loadingBar{width:80%;height:14px;border:2px solid #0ff;border-radius:8px;margin-top:12px;overflow:hidden;}
 #loadingFill{width:0%;height:100%;background:#0ff;transition:width 0.2s ease;}
 </style>
 </head>
 <body>
-
-<!-- Loading Screen -->
 <div id="loadingScreen">
-  <img src="https://static.gwvkyk.com/media/7992b73da2296d954e042.png" alt="Logo" width="80">
+  <img src="https://https://static.gwvkyk.com/media/7992b73da2296d954e042.png" alt="Logo" width="80">
   <div>Loading Game...</div>
   <div id="loadingBar"><div id="loadingFill"></div></div>
 </div>
 
 <div class="wrap">
 <header>
-<img id="logo" src="https://static.gwvkyk.com/media/7992b73da2296d954e042.png" alt="Logo">
+<img id="logo" src="https://https://static.gwvkyk.com/media/7992b73da2296d954e042.png" alt="Logo">
 <h2>Galactic Plinko</h2>
 <div class="hint">Tap top area to drop a Ball. Max 50 Balls.</div>
 </header>
@@ -221,7 +76,6 @@ canvas{
 </div>
 
 <script>
-// --- Game variables ---
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 const W=canvas.width,H=canvas.height;
 const pointsFill=document.getElementById('pointsFill'),pointsText=document.getElementById('pointsText');
@@ -233,10 +87,14 @@ let ballsLeft=50,points=0;
 let gameOver=false;
 const TARGET_POINTS=58;
 
+// Winrate control
+const WIN3_RATE=0.2;
+const WIN6_RATE=0.1;
+
 // 1x main
 if(localStorage.getItem('plinkoPlayed')==='true'){gameOver=true;setTimeout(()=>alert("Oops! You’ve already played this game."),100);}
 
-// --- Assets ---
+// Assets
 const ROWS=6,COLS=6,GRAVITY=0.25,BOUNCE=0.88,COIN_RADIUS=6,PLANET_RADIUS=18;
 const planetPNGUrls=[
 'https://static.gwvkyk.com/media/12dc37efda1968e838ea3.png',
@@ -246,32 +104,24 @@ const planetPNGUrls=[
 const planetImages=planetPNGUrls.map(url=>{const img=new Image();img.src=url;return img;});
 const astronautImg=new Image();astronautImg.src='https://static.gwvkyk.com/media/ef7e4c21da196c3db7efa.png';
 
-// Slot points: 2 kotak 0.5, 2 kotak 1, 2 kotak 2
+// Slot points: 6 kotak total
 const slotPoints=[0.5,0.5,1,1,2,2]; 
-
 function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
 function generateAstronauts(){astronauts=[];for(let i=0;i<20;i++){astronauts.push({x:50+Math.random()*(W-100),y:200+Math.random()*200,floatPhase:Math.random()*Math.PI*2,scale:0.02+Math.random()*0.02});}}
 function generatePlanets(){planets=[];const leftPadding=30;const gapX=(W-leftPadding*2)/(COLS-1);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){const x=leftPadding + c*gapX + (r%2? gapX/2:0);const y=120 + r*70;const img=planetImages[Math.floor(Math.random()*planetImages.length)];planets.push({x,y,r:PLANET_RADIUS,img});}}}
 function setupPointsGrid(){pointsGrid.innerHTML='';slotPoints.forEach(p=>{const box=document.createElement('div');box.className='pointBox';box.textContent=p;pointsGrid.appendChild(box);});}
 function initGame(){coins=[]; points=0; ballsLeft=50; if(!gameOver){gameOver=false;} generateAstronauts(); generatePlanets(); setupPointsGrid(); updateResultsText();}
 
-// --- Loading ---
+// Loading
 const loadingFill=document.getElementById('loadingFill');
 let loadProgress=0;
 const loadingInterval=setInterval(()=>{
     loadProgress+=Math.random()*15;
-    if(loadProgress>=100){
-        loadProgress=100;
-        clearInterval(loadingInterval);
-        document.getElementById('loadingScreen').style.display='none';
-        document.querySelector('.wrap').style.display='flex';
-        initGame();
-        loop();
-    }
+    if(loadProgress>=100){loadProgress=100;clearInterval(loadingInterval);document.getElementById('loadingScreen').style.display='none';document.querySelector('.wrap').style.display='flex';initGame();loop();}
     loadingFill.style.width=loadProgress+'%';
 },100);
 
-// --- Game mechanics ---
+// Game mechanics
 canvas.addEventListener('pointerdown',ev=>{
   if(ballsLeft<=0 || gameOver) return;
   const rect=canvas.getBoundingClientRect();
@@ -285,21 +135,15 @@ function createFloatingPoint(x,y,value){const span=document.createElement('div')
 function updateResultsText(){
     resultsEl.innerHTML=`Total Points: ${points.toFixed(1)} | Balls Left: ${ballsLeft}`;
     const perc=Math.min(points/TARGET_POINTS,1);
-    // Progress bar warna berubah-ubah
-    let color;
-    if(perc<0.25) color='red';
-    else if(perc<0.5) color='orange';
-    else if(perc<0.75) color='yellow';
-    else color='lime';
-    pointsFill.style.width=(perc*100)+'%';
-    pointsFill.style.background=color;
+    let color; if(perc<0.25) color='red'; else if(perc<0.5) color='orange'; else if(perc<0.75) color='yellow'; else color='lime';
+    pointsFill.style.width=(perc*100)+'%'; pointsFill.style.background=color;
 }
+
 function update(){
   astronauts.forEach(a=>{a.x+=Math.sin(Date.now()/1500+a.floatPhase)*0.2;a.y+=Math.sin(Date.now()/2000+a.floatPhase)*0.1;});
   for(let i=coins.length-1;i>=0;i--){
     const c=coins[i]; c.vy+=0.25;c.x+=c.vx;c.y+=c.vy;c.trail.push({x:c.x,y:c.y}); if(c.trail.length>6)c.trail.shift();
-    if(c.x-c.r<0){c.x=c.r;c.vx*=-1;}
-    if(c.x+c.r>W){c.x=W-c.r;c.vx*=-1;}
+    if(c.x-c.r<0){c.x=c.r;c.vx*=-1;} if(c.x+c.r>W){c.x=W-c.r;c.vx*=-1;}
     planets.forEach(p=>{const dx=c.x-p.x,dy=c.y-p.y,dist=Math.hypot(dx,dy),minD=c.r+p.r;if(dist<minD && dist>0.0001){const nx=dx/dist,ny=dy/dist,overlap=minD-dist;c.x+=nx*(overlap+0.2);c.y+=ny*(overlap+0.2);const nv=reflect(c.vx,c.vy,nx,ny);c.vx=nv.vx+(Math.random()-0.5)*0.05;c.vy=nv.vy-0.1;}});
 
     if(c.y>H-40 && !c.collected){
@@ -310,9 +154,11 @@ function update(){
   }
 
   if(coins.every(c=>c.finished) && ballsLeft===0 && !gameOver){
-    if(points>=TARGET_POINTS+5){winTitle.textContent="🎉 YOU WIN $18! 🎉"; winText.textContent="Take a screenshot and claim your $18 reward!"; winPopup.classList.add('active');}
-    else if(points>=TARGET_POINTS){winTitle.textContent="🎉 YOU WIN $3! 🎉"; winText.textContent="Take a screenshot and claim your $3 reward!"; winPopup.classList.add('active');}
-    else {losePopup.classList.add('active');}
+    // Atur winrate
+    const rand=Math.random();
+    if(rand<WIN6_RATE){winTitle.textContent="🎉 YOU WIN $6! 🎉";winText.textContent="Take a screenshot and claim your $6 reward!";winPopup.classList.add('active');}
+    else if(rand<WIN6_RATE+WIN3_RATE){winTitle.textContent="🎉 YOU WIN $3! 🎉";winText.textContent="Take a screenshot and claim your $3 reward!";winPopup.classList.add('active');}
+    else{losePopup.classList.add('active');}
     gameOver=true;
     localStorage.setItem('plinkoPlayed','true');
   }
@@ -323,11 +169,9 @@ function drawCoins(){coins.forEach(c=>{for(let t=0;t<c.trail.length;t++){const p
 function drawAstronauts(){astronauts.forEach(a=>{if(astronautImg.complete){ctx.save();ctx.translate(a.x,a.y);ctx.drawImage(astronautImg,-astronautImg.width/2*a.scale,-astronautImg.height/2*a.scale,astronautImg.width*a.scale,astronautImg.height*a.scale);ctx.restore();}});}
 function draw(){drawBackground();drawAstronauts();drawPlanets();drawCoins();}
 function loop(){update();draw();requestAnimationFrame(loop);}
-
-// Music toggle
 const bgMusic=document.getElementById('bgMusic');
 const musicToggle=document.getElementById('musicToggle');
-musicToggle.addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play(); musicToggle.textContent='Mute';}else{bgMusic.pause(); musicToggle.textContent='Unmute';}});
+musicToggle.addEventListener('click',()=>{if(bgMusic.paused){bgMusic.play();musicToggle.textContent='Mute';}else{bgMusic.pause();musicToggle.textContent='Unmute';}});
 document.getElementById('loseCloseBtn').addEventListener('click',()=>{losePopup.classList.remove('active');});
 </script>
 </body>
